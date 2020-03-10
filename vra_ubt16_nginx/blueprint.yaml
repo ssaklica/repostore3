@@ -1,0 +1,57 @@
+name: 2-Tier CAS Demo Application
+version: 4
+formatVersion: 1
+inputs:
+  sshKey:
+    type: string
+    encrypted: true
+  envsize:
+    type: string
+    enum:
+      - Small
+      - Large
+resources:
+  frontend:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      image: vra_tmp_ubt_1604_ci
+      flavor: medium
+      customizationSpec: vra_linux
+      count: '${input.envsize == "Small" ? 1 : 2}'
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: '${input.sshKey}'
+      cloudConfig: |
+        runcmd:
+          - apt install -y nginx 
+          - /usr/bin/git clone https://github.com/codyde/frontend-demoapp /tmp/cas-demo-application
+          - /bin/rm -rf /etc/nginx/conf.d/*
+          - /bin/rm -rf /usr/share/nginx/html/*
+          - /usr/bin/curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+          - /usr/bin/apt install nodejs -y
+          - /usr/bin/npm install -g @angular/cli
+          - cd /tmp/cas-demo-application && /usr/bin/npm install
+          - /usr/bin/ng build --prod
+          - /bin/cp -R /tmp/cas-demo-application/dist/cas-demo-app/* /usr/share/nginx/html/
+          - /bin/sed -i "s@root /var/www/html@root /usr/share/nginx/html@" /etc/nginx/sites-available/default
+          - /bin/cp /tmp/cas-demo-application/nginx/default.conf /etc/nginx/conf.d/default.conf
+          - /bin/rm -rf /etc/nginx/sites-available/default
+          - /bin/sed -i "s@include /etc/nginx/sites-enabled/*@# include /etc/nginx/sites-enabled/*@" /etc/nginx/nginx.conf
+          - /bin/systemctl restart nginx
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+          assignment: static
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: 'np:vra-mgmt'

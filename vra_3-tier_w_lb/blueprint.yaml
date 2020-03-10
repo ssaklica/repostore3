@@ -1,0 +1,216 @@
+formatVersion: 1
+inputs:
+  VM1Net:
+    type: string
+    enum:
+      - 'np:vra-mgmt'
+      - 'np:vra-subnet03'
+      - 'np:vra-subnet02'
+      - 'np:vra-subnet01'
+    default: 'np:vra-mgmt'
+    title: VM1Net
+  VM2Net:
+    type: string
+    enum:
+      - 'np:vra-mgmt'
+      - 'np:vra-subnet03'
+      - 'np:vra-subnet02'
+      - 'np:vra-subnet01'
+    default: 'np:vra-mgmt'
+    title: VM2Net
+  VM3Net:
+    type: string
+    enum:
+      - 'np:vra-mgmt'
+      - 'np:vra-subnet03'
+      - 'np:vra-subnet02'
+      - 'np:vra-subnet01'
+    default: 'np:vra-mgmt'
+    title: VM3Net
+  VMSize:
+    type: string
+    enum:
+      - small
+      - medium
+      - large
+    default: small
+    title: VMSize
+  VM1CS:
+    type: string
+    enum:
+      - vra_windows
+      - vra_linux
+    default: vra_linux
+    title: VM1CS
+  VM2CS:
+    type: string
+    enum:
+      - vra_windows
+      - vra_linux
+    default: vra_linux
+    title: VM2CS
+  VM3CS:
+    type: string
+    enum:
+      - vra_windows
+      - vra_linux
+    default: vra_linux
+    title: VM3CS
+  VM1OS:
+    type: string
+    enum:
+      - vra_tmp_w2016
+      - vra_tmp_w2016_iis
+      - vra_tmp_ubt_1604_ci
+    default: vra_tmp_ubt_1604_ci
+    title: VM1OS
+  VM2OS:
+    type: string
+    enum:
+      - vra_tmp_w2016
+      - vra_tmp_w2016_iis
+      - vra_tmp_ubt_1604_ci
+    default: vra_tmp_ubt_1604_ci
+    title: VM2OS
+  VM3OS:
+    type: string
+    enum:
+      - vra_tmp_w2016
+      - vra_tmp_w2016_iis
+      - vra_tmp_ubt_1604_ci
+    default: vra_tmp_ubt_1604_ci
+    title: VM3OS
+  VM1RP:
+    type: string
+    enum:
+      - 'rp:vra8prod'
+      - 'rp:vra8dev'
+      - 'rp:vra8test'
+      - 'rp:vra8'
+    default: 'rp:vra8'
+    title: VM1RP
+  VM2RP:
+    type: string
+    enum:
+      - 'rp:vra8prod'
+      - 'rp:vra8dev'
+      - 'rp:vra8test'
+      - 'rp:vra8'
+    default: 'rp:vra8'
+    title: VM2RP
+  VM3RP:
+    type: string
+    enum:
+      - 'rp:vra8prod'
+      - 'rp:vra8dev'
+      - 'rp:vra8test'
+      - 'rp:vra8'
+    default: 'rp:vra8'
+    title: VM3RP
+  VMCNT:
+    type: integer
+    title: VM Count
+    minimum: 1
+    maximum: 10
+    default: '1'
+resources:
+  LB_1:
+    type: Cloud.LoadBalancer
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      name: LB
+      routes:
+        - protocol: HTTP
+          port: '80'
+          instanceProtocol: HTTP
+          instancePort: '80'
+          healthCheckConfiguration:
+            protocol: HTTP
+            port: '80'
+            urlPath: /
+            intervalSeconds: 15
+            timeoutSeconds: 5
+            unhealthyThreshold: 5
+            healthyThreshold: 2
+      network: '${resource.VMNet1.id}'
+      instances: '${resource.VM_1[*].id}'
+      internetFacing: false
+  VM_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      image: '${input.VM1OS}'
+      flavor: '${input.VMSize}'
+      count: '${input.VMCNT}'
+      constraints:
+        - tag: '${input.VM1RP}'
+      customizationSpec: '${input.VM1CS}'
+      networks:
+        - network: '${resource.VMNet1.id}'
+          assignment: static
+  VM_2:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 2
+    properties:
+      image: '${input.VM2OS}'
+      flavor: '${input.VMSize}'
+      constraints:
+        - tag: '${input.VM2RP}'
+      customizationSpec: '${input.VM2CS}'
+      networks:
+        - network: '${resource.VMNet2.id}'
+          assignment: static
+  VM_3:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 3
+    properties:
+      image: '${input.VM3OS}'
+      flavor: '${input.VMSize}'
+      constraints:
+        - tag: '${input.VM3RP}'
+      customizationSpec: '${input.VM3CS}'
+      networks:
+        - network: '${resource.VMNet3.id}'
+          assignment: static
+  VMNet1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: '${input.VM1Net}'
+  VMNet2:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 2
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: '${input.VM2Net}'
+  VMNet3:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 3
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: '${input.VM3Net}'

@@ -1,0 +1,51 @@
+formatVersion: 1
+inputs: {}
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      image: vra_tmp_ubt_1604_ci
+      flavor: medium
+      cloudConfig: |
+        #cloud-config
+        packages:
+          - postgresql
+        runcmd:
+          - |
+              sudo -u postgres psql <<SQL
+                  CREATE DATABASE posts;
+                  CREATE USER dbuser with encrypted password 'VMware1!';
+                  grant all privileges on database posts to dbuser;
+                  \connect posts;
+                  CREATE TABLE textData (
+                  id        SERIAL PRIMARY KEY,
+                  title       TEXT,
+                  text        TEXT
+                  );
+                  ALTER DATABASE posts OWNER TO dbuser;
+                  ALTER TABLE textData OWNER TO dbuser;
+              SQL
+          - echo "Restarting Postgres Services"
+          - [ systemctl, stop, postgresql.service ]
+          - ufw allow 5432
+          - echo "host    all    all       0.0.0.0/0   md5" >> /etc/postgresql/9.5/main/pg_hba.conf
+          - echo "listen_addresses = '*'" >> /etc/postgresql/9.5/main/postgresql.conf
+          - [ systemctl, start, postgresql.service ]
+      customizationSpec: vra_linux
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+          assignment: static
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: 'np:vra-mgmt'

@@ -1,0 +1,26 @@
+formatVersion: 1
+inputs: {}
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      image: vra_tmp_ubt_1604_ci
+      flavor: medium
+      customizationSpec: vra_linux
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+          assignment: static
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: 'np:vra-mgmt'
